@@ -6,6 +6,13 @@
 #include <tuple>
 #include <utility>
 
+const int MAX_TESTS_ARR_SIZE = 1024;
+const int STOP_LINE_VALUE = -1;
+
+int test();
+
+int slow_get_page(int key);
+
 namespace caches {
 
     template <typename T, typename KeyT = int, typename CntT = unsigned int>
@@ -39,12 +46,12 @@ namespace caches {
         bool lookup_update(KeyT key, F slow_get_page)
         {
             auto hit = hash_.find(key);
-            find_less_used();
 
             if (hit == hash_.end())
             {
                 if (full())
                 {
+                    find_less_used();
                     hash_.erase((*less_used_iter).key);
                     cache_.erase(less_used_iter);
                 }
@@ -58,6 +65,13 @@ namespace caches {
             (*(hit->second)).cnt++;
 
             return true;
+        }
+
+        void change_size(size_t new_sz)
+        {
+            hash_.clear();
+            cache_.clear();
+            sz_ = new_sz;
         }
 
         void find_less_used()
@@ -78,6 +92,8 @@ namespace caches {
         void print_cache_list()
         {
             ListIt iter = cache_.end();
+
+            std::cout << "key-cnt" << std::endl;
 
             while (iter-- != cache_.begin())
             {
