@@ -9,7 +9,9 @@
 const int MAX_TESTS_ARR_SIZE = 1024;
 const int STOP_LINE_VALUE = -1;
 
-int test();
+int LFU_test();
+
+int slow_get_page(int key);
 
 int slow_get_page(int key);
 

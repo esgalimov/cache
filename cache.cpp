@@ -1,7 +1,9 @@
 #include <iostream>
 
 #include "cache.hpp"
+#include "ideal_cache.hpp"
 
+//#define TESTS
 
 int slow_get_page(int key)
 {
@@ -10,7 +12,53 @@ int slow_get_page(int key)
 
 int main()
 {
-    test();
+    #ifdef TESTS
+        LFU_test();
+        ideal_cache_test();
+    #endif
+    #ifndef TESTS
+
+    std::cout << "Enter cache size and number of requests:" << std::endl;
+
+    size_t cache_size = 0,
+           req_num = 0;
+
+    if (!(std::cin >> cache_size && std::cin >> req_num))
+    {
+        std::cout << "Invalid input" << std::endl;
+        return 1;
+    }
+
+    caches::cache_t<int> myCache{cache_size};
+
+    int* requests = new int [req_num];
+    int req = 0, hits = 0;
+
+    for (size_t i = 0; i < req_num; i++)
+    {
+        if (!(std::cin >> req))
+        {
+            std::cout << "Invalid input" << std::endl;
+            return 1;
+        }
+        requests[i] = req;
+
+        hits += (int) myCache.lookup_update(req, slow_get_page);
+    }
+    std::cout << "LFU hits = " << hits << std::endl;
+    hits = 0;
+
+    ideal_caches::ideal_cache_t<int> myIdealCache{cache_size};
+
+    for (size_t i = 0; i < req_num; i++)
+    {
+        hits += myIdealCache.lookup_update(requests[i], slow_get_page, requests, req_num, i);
+    }
+    std::cout << "Ideal cache hits = " << hits << std::endl;
+
+    delete[] requests;
+
+    #endif
 
     return 0;
 }
