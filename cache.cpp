@@ -3,7 +3,7 @@
 #include "cache.hpp"
 #include "ideal_cache.hpp"
 
-//#define TESTS
+#define TESTS
 
 int slow_get_page(int key)
 {
@@ -18,12 +18,12 @@ int main()
     #endif
     #ifndef TESTS
 
-    FILE* stream = freopen( "015.dat", "r", stdin);
-    if (!stream)
-    {
-        std::cout << "Something wrog with file opening" << std::endl;
-        return 1;
-    }
+    // FILE* stream = freopen( "011.dat", "r", stdin);
+    // if (!stream)
+    // {
+    //     std::cout << "Something wrog with file opening" << std::endl;
+    //     return 1;
+    // }
 
     std::cout << "Enter cache size and number of requests:" << std::endl;
 
