@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 
 #include "cache.hpp"
 #include "ideal_cache.hpp"
@@ -12,36 +13,33 @@ int LFU_test() {
         return 1;
     }
 
-    int cur_value = 0,
-        next_value = 0,
-        hits = 0;
+    int cache_sz = 0, req_num = 0, cur_req = 0, hits = 0;
 
     std::cout << "LFU cache tests:" << std::endl;
 
-    ftests >> cur_value;
-    caches::cache_t<int> myCache{(size_t) cur_value};
-    ftests >> cur_value;
+    ftests >> cache_sz;
+    caches::cache_t<int> myCache{(size_t) cache_sz};
+    ftests >> req_num;
 
-    while (ftests >> next_value)
+    while (ftests >> cur_req)
     {
-        if (next_value == STOP_LINE_VALUE)
+        if (req_num-- == 0)
         {
-            if (hits == cur_value)
+            if (hits == cur_req)
             {
                 std::cout << "Test passed, hits = " << hits << std::endl;
             }
             else
             {
-                std::cout << "Test failed, hits = " << hits << ", correct = " << cur_value << std::endl;
+                std::cout << "Test failed, hits = " << hits << ", correct = " << cur_req << std::endl;
             }
-            ftests >> cur_value;
-            myCache.change_size((size_t) cur_value);
-            ftests >> cur_value;
+            ftests >> cache_sz;
+            myCache.change_size((size_t) cache_sz);
+            ftests >> req_num;
             hits = 0;
             continue;
         }
-        hits += (int) myCache.lookup_update(cur_value, slow_get_page);
-        cur_value = next_value;
+        hits += (int) myCache.lookup_update(cur_req, slow_get_page);
     }
 
     return 0;
@@ -56,37 +54,41 @@ int ideal_cache_test()
         return 1;
     }
 
-    int* requests = (int*) calloc(MAX_TESTS_ARR_SIZE, sizeof(int));
-
     std::cout << "\nIdeal cache tests:" << std::endl;
 
-    int val = 0;
+    int cur_req = 0, cache_sz = 0, req_num = 0;
 
-    ftests >> val;
-    ideal_caches::ideal_cache_t<int> myCache{(size_t) val};
+    ftests >> cache_sz;
+    ideal_caches::ideal_cache_t<int> myCache{(size_t) cache_sz};
+
+    ftests >> req_num;
+    int* requests = (int*) calloc(req_num, sizeof(int));
 
     int hits = 0;
     size_t i = 0;
 
-    while (ftests >> val)
+    while (ftests >> cur_req)
     {
-        if (val == STOP_LINE_VALUE)
+        if (req_num-- == 0)
         {
-            for (size_t j = 0; j < i - 1; j++)
+            for (size_t j = 0; j < i; j++)
                 hits += (int) myCache.lookup_update(requests[j], slow_get_page, requests, i, j);
 
-            std::cout << "Ideal, hits = " << hits << ", LFU = " << requests[i - 1] << std::endl;
+            std::cout << "Ideal, hits = " << hits << ", LFU = " << cur_req << std::endl;
 
-            ftests >> val;
-            myCache.change_size((size_t) val);
+            ftests >> cache_sz;
+            myCache.change_size((size_t) cache_sz);
+
+            ftests >> req_num;
+            requests = (int*) realloc(requests, req_num * sizeof(int));
+
             hits = 0;
             i = 0;
             continue;
         }
-        requests[i++] = val;
+        requests[i++] = cur_req;
     }
-
-    free(requests);
+    delete[] requests;
 
     return 0;
 }

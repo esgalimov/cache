@@ -13,8 +13,6 @@ int LFU_test();
 
 int slow_get_page(int key);
 
-int slow_get_page(int key);
-
 namespace caches {
 
     template <typename T, typename KeyT = int, typename CntT = unsigned int>

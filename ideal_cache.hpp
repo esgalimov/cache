@@ -45,22 +45,27 @@ namespace ideal_caches {
 
             if (hit == hash_.end())
             {
-                size_t have_to_erase = find_later_used(key, requests, len, pos);
-                bool is_fool = full();
-
-                if (is_fool && have_to_erase)
+                if (full())
                 {
-                    hash_.erase((*later_used_iter).key);
-                    cache_.erase(later_used_iter);
-                }
+                    if (find_later_used(key, requests, len, pos))
+                    {
+                        hash_.erase((*later_used_iter).key);
+                        cache_.erase(later_used_iter);
 
-                if (!is_fool || (is_fool && have_to_erase))
+                        page_t emplace_struct = {slow_get_page(key), key, 0};
+
+                        cache_.emplace_front(emplace_struct);
+                        hash_.emplace(key, cache_.begin());
+                    }
+                }
+                else
                 {
                     page_t emplace_struct = {slow_get_page(key), key, 0};
 
                     cache_.emplace_front(emplace_struct);
                     hash_.emplace(key, cache_.begin());
                 }
+
                 return false;
             }
 

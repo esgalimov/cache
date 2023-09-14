@@ -18,6 +18,13 @@ int main()
     #endif
     #ifndef TESTS
 
+    FILE* stream = freopen( "015.dat", "r", stdin);
+    if (!stream)
+    {
+        std::cout << "Something wrog with file opening" << std::endl;
+        return 1;
+    }
+
     std::cout << "Enter cache size and number of requests:" << std::endl;
 
     size_t cache_size = 0,
@@ -28,6 +35,8 @@ int main()
         std::cout << "Invalid input" << std::endl;
         return 1;
     }
+
+    std::cout << "Enter " << req_num << " requests:" << std::endl;
 
     caches::cache_t<int> myCache{cache_size};
 
