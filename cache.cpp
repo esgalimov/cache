@@ -3,7 +3,7 @@
 #include "cache.hpp"
 #include "ideal_cache.hpp"
 
-#define TESTS
+//#define TESTS
 
 int slow_get_page(int key)
 {
@@ -18,7 +18,7 @@ int main()
     #endif
     #ifndef TESTS
 
-    // FILE* stream = freopen( "011.dat", "r", stdin);
+    // FILE* stream = freopen( "015.dat", "r", stdin);
     // if (!stream)
     // {
     //     std::cout << "Something wrog with file opening" << std::endl;
@@ -55,15 +55,15 @@ int main()
         hits += (int) myCache.lookup_update(req, slow_get_page);
     }
     std::cout << "LFU hits = " << hits << std::endl;
-    hits = 0;
-
-    ideal_caches::ideal_cache_t<int> myIdealCache{cache_size};
-
-    for (size_t i = 0; i < req_num; i++)
-    {
-        hits += myIdealCache.lookup_update(requests[i], slow_get_page, requests, req_num, i);
-    }
-    std::cout << "Ideal cache hits = " << hits << std::endl;
+//     hits = 0;
+//
+//     ideal_caches::ideal_cache_t<int> myIdealCache{cache_size};
+//
+//     for (size_t i = 0; i < req_num; i++)
+//     {
+//         hits += myIdealCache.lookup_update(requests[i], slow_get_page, requests, req_num, i);
+//     }
+//     std::cout << "Ideal cache hits = " << hits << std::endl;
 
     delete[] requests;
 
