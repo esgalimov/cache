@@ -2,11 +2,21 @@
 #include <fstream>
 #include <cstdlib>
 
-#include "cache.hpp"
+#include "lfu_cache.hpp"
 #include "ideal_cache.hpp"
 
+int ideal_cache_test();
+int LFU_test();
+int slow_get_page(int key);
+
+
+int slow_get_page(int key)
+{
+    return key;
+}
+
 int LFU_test() {
-    std::fstream ftests("test.txt");
+    std::fstream ftests("tests/test.txt");
 
     if (!ftests.is_open()) {
         std::cout << "Can't open file with tests" << std::endl;
@@ -47,7 +57,7 @@ int LFU_test() {
 
 int ideal_cache_test()
 {
-    std::fstream ftests("test.txt");
+    std::fstream ftests("tests/test.txt");
 
     if (!ftests.is_open()) {
         std::cout << "Can't open file with tests" << std::endl;
@@ -89,6 +99,14 @@ int ideal_cache_test()
         requests[i++] = cur_req;
     }
     delete[] requests;
+
+    return 0;
+}
+
+int main()
+{
+    LFU_test();
+    ideal_cache_test();
 
     return 0;
 }

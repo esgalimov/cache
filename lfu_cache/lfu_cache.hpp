@@ -7,10 +7,6 @@
 #include <tuple>
 #include <utility>
 
-const int MAX_TESTS_ARR_SIZE = 1024;
-const int STOP_LINE_VALUE = -1;
-
-int LFU_test();
 
 int slow_get_page(int key);
 
@@ -49,14 +45,14 @@ namespace caches {
             {
                 if (full())
                 {
-                    ListIt less_used_iter = ((*cnt_.begin()).second).begin();
+                    ListIt less_used_iter = (cnt_.begin()->second).begin();
 
-                    CntT less_used_cnt = (*less_used_iter).cnt;
+                    CntT less_used_cnt = less_used_iter->cnt;
 
-                    hash_.erase((*less_used_iter).key);
-                    ((*cnt_.begin()).second).erase(less_used_iter);
+                    hash_.erase(less_used_iter->key);
+                    (cnt_.begin()->second).erase(less_used_iter);
 
-                    if (((*cnt_.begin()).second).size() == 0)
+                    if (cnt_.begin()->second.size() == 0)
                         cnt_.erase(less_used_cnt);
                 }
                 page_t emplace_struct = {slow_get_page(key), key, 1};
@@ -66,32 +62,32 @@ namespace caches {
                 if (cnt_one_find == cnt_.end())
                     cnt_.emplace(1, std::list<page_t>{emplace_struct});
                 else
-                    ((*cnt_.begin()).second).emplace_back(emplace_struct);
+                    (cnt_.begin()->second).emplace_back(emplace_struct);
 
-                hash_.emplace(key, --(*cnt_.begin()).second.end());
+                hash_.emplace(key, --(cnt_.begin()->second.end()));
 
                 return false;
             }
 
             ListIt cur_iter = hit->second;
 
-            (*cur_iter).cnt++;
+            cur_iter->cnt++;
 
-            auto cnt_hit_find = cnt_.find((*cur_iter).cnt);
+            auto cnt_hit_find = cnt_.find(cur_iter->cnt);
 
             if (cnt_hit_find == cnt_.end())
-                cnt_.emplace((*cur_iter).cnt, std::list<page_t>{*cur_iter});
+                cnt_.emplace(cur_iter->cnt, std::list<page_t>{*cur_iter});
 
             else
                 cnt_hit_find->second.emplace_back(*cur_iter);
 
-            hash_.at(key) = --(*(cnt_.find((*cur_iter).cnt))).second.end();
+            hash_.at(key) = --(cnt_.find(cur_iter->cnt)->second.end());
 
-            CntT cnt_before = (*cur_iter).cnt - 1;
+            CntT cnt_before = cur_iter->cnt - 1;
             auto cnt_before_find = cnt_.find(cnt_before);
             (*cnt_before_find).second.erase(cur_iter);
 
-            if ((*cnt_before_find).second.size() == 0)
+            if (cnt_before_find->second.size() == 0)
                 cnt_.erase(cnt_before);
 
             return true;

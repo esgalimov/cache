@@ -1,9 +1,6 @@
 #include <iostream>
 
-#include "cache.hpp"
-#include "ideal_cache.hpp"
-
-//#define TESTS
+#include "lfu_cache.hpp"
 
 int slow_get_page(int key)
 {
@@ -12,13 +9,7 @@ int slow_get_page(int key)
 
 int main()
 {
-    #ifdef TESTS
-        LFU_test();
-        ideal_cache_test();
-    #endif
-    #ifndef TESTS
-
-    // FILE* stream = freopen( "015.dat", "r", stdin);
+    // FILE* stream = freopen( "011.dat", "r", stdin);
     // if (!stream)
     // {
     //     std::cout << "Something wrog with file opening" << std::endl;
@@ -36,11 +27,16 @@ int main()
         return 1;
     }
 
+    if (cache_size <= 0 || req_num <= 0)
+    {
+        std::cout << "Bad cache_size = " << cache_size << " or req_num = " << req_num << std::endl;
+        return 1;
+    }
+
     std::cout << "Enter " << req_num << " requests:" << std::endl;
 
     caches::cache_t<int> myCache{cache_size};
 
-    int* requests = new int [req_num];
     int req = 0, hits = 0;
 
     for (size_t i = 0; i < req_num; i++)
@@ -50,24 +46,10 @@ int main()
             std::cout << "Invalid input" << std::endl;
             return 1;
         }
-        requests[i] = req;
 
         hits += (int) myCache.lookup_update(req, slow_get_page);
     }
     std::cout << "LFU hits = " << hits << std::endl;
-//     hits = 0;
-//
-//     ideal_caches::ideal_cache_t<int> myIdealCache{cache_size};
-//
-//     for (size_t i = 0; i < req_num; i++)
-//     {
-//         hits += myIdealCache.lookup_update(requests[i], slow_get_page, requests, req_num, i);
-//     }
-//     std::cout << "Ideal cache hits = " << hits << std::endl;
-
-    delete[] requests;
-
-    #endif
 
     return 0;
 }

@@ -6,8 +6,6 @@
 #include <tuple>
 #include <utility>
 
-int ideal_cache_test();
-
 
 namespace ideal_caches {
 

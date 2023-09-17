@@ -1,10 +1,37 @@
 CXX ?= g++
 
-CXXFLAGS ?= -D _DEBUG -ggdb3 -std=c++17 -O2 -g
+CXXFLAGS ?= -std=c++17 -O2 -g
+BUILDDIR ?= ./build/
+SRCDIR ?= ./
 
-cache.o: cache.cpp tests.cpp cache.hpp ideal_cache.hpp
-	$(CXX) $(CXXFLAGS) cache.cpp tests.cpp -o $@
+COMMONINC = -I./lfu_cache -I./ideal_cache
+
+CXXFLAGS += $(COMMONINC)
+
+CCSRCS = $(SRCDIR)lfu_cache/lfu_cache.cpp $(SRCDIR)ideal_cache/ideal_cache.cpp $(SRCDIR)tests/tests.cpp
+
+SUBS := $(CCSRCS)
+SUBS := $(subst $(SRCDIR), $(BUILDDIR), $(SUBS))
+
+OBJS = $(SUBS:.cpp=.o)
+
+DEPS = $(SUBS:.cpp=.d)
+
+.PHONY: all
+all: $(OBJS)
+
+$(BUILDDIR)%.o: $(SRCDIR)%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $< -o $@
+
+include $(DEPS)
+
+$(BUILDDIR)%.d: $(SRCDIR)%.cpp
+	@echo "Collecting deps for $<"
+	@mkdir -p $(dir $@)
+	@$(CXX) -E $(CXXFLAGS) $< -MM -MT $(@:.d=.o) > $@
 
 .PHONY: clean
 clean:
-	rm -rf *.o
+	rm -rf $(BUILDDIR)
+
