@@ -8,7 +8,7 @@ COMMONINC = -I./lfu_cache -I./ideal_cache
 
 CXXFLAGS += $(COMMONINC)
 
-CCSRCS = $(SRCDIR)lfu_cache/lfu_cache.cpp $(SRCDIR)ideal_cache/ideal_cache.cpp $(SRCDIR)tests/tests.cpp
+CCSRCS = $(SRCDIR)lfu_cache/lfu_cache.cpp $(SRCDIR)ideal_cache/ideal_cache.cpp
 
 SUBS := $(CCSRCS)
 SUBS := $(subst $(SRCDIR), $(BUILDDIR), $(SUBS))

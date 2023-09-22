@@ -2,6 +2,7 @@
 
 #include <iterator>
 #include <list>
+#include <map>
 #include <unordered_map>
 #include <tuple>
 #include <utility>
@@ -13,128 +14,119 @@ namespace ideal_caches {
     struct ideal_cache_t
     {
         size_t sz_;
+        size_t req_num_;
 
         struct page_t
         {
             KeyT   key;
             T      content;
-            size_t next_find;
+            size_t pos;
         };
 
-        std::list<page_t> cache_;
+        std::map<size_t, page_t, std::greater<size_t>> cache_;
+        using MapIt = typename std::map<size_t, page_t, std::greater<size_t>>::iterator;
 
-        using ListIt = typename std::list<page_t>::iterator;
+        std::unordered_multimap<KeyT, page_t> hash_;
 
-        std::unordered_map<KeyT, ListIt> hash_;
+        std::vector<KeyT> requests;
 
-        ListIt later_used_iter;
 
-        ideal_cache_t(size_t sz) : sz_(sz) {};
+        ideal_cache_t(size_t sz, size_t req_num) : sz_(sz), req_num_(req_num) {};
 
         bool full() const
         {
             return cache_.size() == sz_;
         }
 
-        template <typename F>
-        bool lookup_update(KeyT key, F slow_get_page, T* requests, size_t len, size_t pos)
+        bool get_requests()
         {
-            auto hit = hash_.find(key);
+            requests.reserve(req_num_);
+            KeyT curr_key = 0;
 
-            if (hit == hash_.end())
+            for (size_t i = 0; i < req_num_; i++)
+            {
+                if (!(std::cin >> curr_key))
+                {
+                    std::cout << "Bad request on pos " << i << std::endl;
+                    return false;
+                }
+                requests.push_back(curr_key);
+            }
+            for (size_t i = 0; i < req_num_; i++)
+            {
+                hash_.emplace(requests[i], page_t{requests[i], 0, i});
+            }
+            return true;
+        }
+
+        template <typename F>
+        bool lookup_update(size_t pos, F slow_get_page)
+        {
+            auto hit = cache_.find(pos);
+
+            if (hit == cache_.end())
             {
                 if (full())
                 {
-                    if (find_later_used(key, requests, len, pos))
+                    hash_.erase(hash_.find(requests[pos]));
+
+                    MapIt later_used = cache_.begin();
+                    auto next_curr = hash_.find(requests[pos]);
+
+                    if (next_curr != hash_.end() && later_used->second.pos > next_curr->second.pos)
                     {
-                        hash_.erase((*later_used_iter).key);
-                        cache_.erase(later_used_iter);
-
-                        page_t emplace_struct = {slow_get_page(key), key, 0};
-
-                        cache_.emplace_front(emplace_struct);
-                        hash_.emplace(key, cache_.begin());
+                        cache_.erase(later_used);
+                        cache_.emplace(next_curr->second.pos, page_t{requests[pos],
+                                       slow_get_page(requests[pos]), next_curr->second.pos});
                     }
-                }
-                else
-                {
-                    page_t emplace_struct = {slow_get_page(key), key, 0};
 
-                    cache_.emplace_front(emplace_struct);
-                    hash_.emplace(key, cache_.begin());
+                    return false;
                 }
+
+                hash_.erase(hash_.find(requests[pos]));
+                auto next_curr = hash_.find(requests[pos]);
+
+                if (next_curr != hash_.end())
+                    cache_.emplace(next_curr->second.pos, page_t{requests[pos],
+                                   slow_get_page(requests[pos]), next_curr->second.pos});
 
                 return false;
             }
 
+            cache_.erase(hit);
+            hash_.erase(hash_.find(requests[pos]));
+
+            auto next_curr = hash_.find(requests[pos]);
+
+            if (next_curr == hash_.end())
+                cache_.emplace(req_num_, page_t{requests[pos], slow_get_page(requests[pos]), req_num_});
+            else
+                cache_.emplace(next_curr->second.pos, page_t{requests[pos],
+                               slow_get_page(requests[pos]), next_curr->second.pos});
+
             return true;
         }
 
-        void change_size(size_t new_sz)
+        void print_cache()
         {
-            hash_.clear();
-            cache_.clear();
-            sz_ = new_sz;
+            std::cout << "cache, size = " << cache_.size() << std::endl;
+            for (auto it = cache_.begin(); it != cache_.end(); it++)
+                std::cout << it->second.key << "-" << it->second.pos << std::endl;
+
+            std::cout << "\n\n";
         }
 
-        size_t find_later_used(KeyT key, T* requests, size_t len, size_t pos)
+        void print_hash()
         {
-            ListIt iter = cache_.begin();
-
-            size_t curr_find = len;
-
-            for (size_t i = pos + 1; i < len; i++)
+            std::cout << "hash" << std::endl;
+            for (unsigned i = 0; i < hash_.bucket_count(); ++i)
             {
-                if (requests[i] == key)
-                {
-                    curr_find = i;
-                    break;
-                }
+                std::cout << i << " contains:";
+                for (auto local_it = hash_.begin(i); local_it != hash_.end(i); ++local_it)
+                    std::cout << " " << local_it->first << ":" << local_it->second.pos;
+                std::cout << std::endl;
             }
-
-            while (iter != cache_.end())
-            {
-                (*iter).next_find = len;
-
-                for (size_t i = pos + 1; i < len; i++)
-                {
-                    if (requests[i] == (*iter).key)
-                    {
-                        (*iter).next_find = i;
-                        break;
-                    }
-                }
-                iter++;
-            }
-            iter = cache_.begin();
-            later_used_iter = iter;
-
-            while (iter != cache_.end())
-            {
-                if ((*iter).next_find >= (*later_used_iter).next_find)
-                {
-                    later_used_iter = iter;
-                }
-                iter++;
-            }
-
-            if (curr_find > (*later_used_iter).next_find)
-                return 0;
-
-            return curr_find;
-        }
-
-        void print_cache_list()
-        {
-            ListIt iter = cache_.end();
-
-            std::cout << "key" << std::endl;
-
-            while (iter-- != cache_.begin())
-            {
-                std::cout << (*iter).content << " ";
-            }
-            std::cout << std::endl;
+            std::cout << "\n\n";
         }
     };
 

@@ -9,14 +9,7 @@ int slow_get_page(int key)
 
 int main()
 {
-    // FILE* stream = freopen( "011.dat", "r", stdin);
-    // if (!stream)
-    // {
-    //     std::cout << "Something wrog with file opening" << std::endl;
-    //     return 1;
-    // }
-
-    std::cout << "Enter cache size and number of requests:" << std::endl;
+    //std::cout << "Enter cache size and number of requests:" << std::endl;
 
     size_t cache_size = 0,
            req_num = 0;
@@ -33,7 +26,7 @@ int main()
         return 1;
     }
 
-    std::cout << "Enter " << req_num << " requests:" << std::endl;
+    //std::cout << "Enter " << req_num << " requests:" << std::endl;
 
     caches::cache_t<int> myCache{cache_size};
 

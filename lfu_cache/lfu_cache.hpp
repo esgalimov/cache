@@ -92,13 +92,6 @@ namespace caches {
 
             return true;
         }
-
-        void change_size(size_t new_sz)
-        {
-            hash_.clear();
-            cnt_.clear();
-            sz_ = new_sz;
-        }
     };
 
 }
