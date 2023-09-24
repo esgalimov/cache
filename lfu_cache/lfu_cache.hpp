@@ -15,6 +15,7 @@ namespace caches {
     template <typename T, typename KeyT = int, typename CntT = unsigned int>
     struct cache_t
     {
+        private:
         size_t sz_;
 
         struct page_t
@@ -29,48 +30,40 @@ namespace caches {
         std::unordered_map<KeyT, ListIt> hash_;
         std::map<CntT, std::list<page_t>> cnt_;
 
-        cache_t(size_t sz) : sz_(sz) {};
-
         bool full() const
         {
             return hash_.size() == sz_;
         }
 
-        template <typename F>
-        bool lookup_update(KeyT key, F slow_get_page)
+        void delete_less_used_page()
         {
-            auto hit = hash_.find(key);
+            ListIt less_used_iter = (cnt_.begin()->second).begin();
 
-            if (hit == hash_.end())
-            {
-                if (full())
-                {
-                    ListIt less_used_iter = (cnt_.begin()->second).begin();
+            CntT less_used_cnt = less_used_iter->cnt;
 
-                    CntT less_used_cnt = less_used_iter->cnt;
+            hash_.erase(less_used_iter->key);
+            (cnt_.begin()->second).erase(less_used_iter);
 
-                    hash_.erase(less_used_iter->key);
-                    (cnt_.begin()->second).erase(less_used_iter);
+            if (cnt_.begin()->second.size() == 0)
+                cnt_.erase(less_used_cnt);
+        }
 
-                    if (cnt_.begin()->second.size() == 0)
-                        cnt_.erase(less_used_cnt);
-                }
-                page_t emplace_struct = {slow_get_page(key), key, 1};
+        void add_new_page(KeyT key, T content)
+        {
+            page_t emplace_struct = {content, key, 1};
 
-                auto cnt_one_find = cnt_.find(1);
+            auto cnt_one_find = cnt_.find(1);
 
-                if (cnt_one_find == cnt_.end())
-                    cnt_.emplace(1, std::list<page_t>{emplace_struct});
-                else
-                    (cnt_.begin()->second).emplace_back(emplace_struct);
+            if (cnt_one_find == cnt_.end())
+                cnt_.emplace(1, std::list<page_t>{emplace_struct});
+            else
+                (cnt_.begin()->second).emplace_back(emplace_struct);
 
-                hash_.emplace(key, --(cnt_.begin()->second.end()));
+            hash_.emplace(key, --(cnt_.begin()->second.end()));
+        }
 
-                return false;
-            }
-
-            ListIt cur_iter = hit->second;
-
+        void hit_update(ListIt cur_iter, KeyT key)
+        {
             cur_iter->cnt++;
 
             auto cnt_hit_find = cnt_.find(cur_iter->cnt);
@@ -89,6 +82,27 @@ namespace caches {
 
             if (cnt_before_find->second.size() == 0)
                 cnt_.erase(cnt_before);
+        }
+
+        public:
+
+        cache_t(size_t sz) : sz_(sz) {};
+
+        template <typename F>
+        bool lookup_update(KeyT key, F slow_get_page)
+        {
+            auto hit = hash_.find(key);
+
+            if (hit == hash_.end())
+            {
+                if (full()) delete_less_used_page();
+
+                add_new_page(key, slow_get_page(key));
+
+                return false;
+            }
+
+            hit_update(hit->second, key);
 
             return true;
         }

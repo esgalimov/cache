@@ -5,7 +5,6 @@
 #include <map>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 
 namespace ideal_caches {
@@ -13,6 +12,8 @@ namespace ideal_caches {
     template <typename T, typename KeyT = int, typename CntT = unsigned int>
     struct ideal_cache_t
     {
+        private:
+
         size_t sz_;
         size_t req_num_;
 
@@ -28,36 +29,59 @@ namespace ideal_caches {
 
         std::unordered_multimap<KeyT, page_t> hash_;
 
-        std::vector<KeyT> requests;
-
-
-        ideal_cache_t(size_t sz, size_t req_num) : sz_(sz), req_num_(req_num) {};
+        KeyT* requests;
 
         bool full() const
         {
             return cache_.size() == sz_;
         }
 
-        bool get_requests()
+        void get_requests()
         {
-            requests.reserve(req_num_);
-            KeyT curr_key = 0;
-
             for (size_t i = 0; i < req_num_; i++)
-            {
-                if (!(std::cin >> curr_key))
-                {
-                    std::cout << "Bad request on pos " << i << std::endl;
-                    return false;
-                }
-                requests.push_back(curr_key);
-            }
-            for (size_t i = 0; i < req_num_; i++)
-            {
                 hash_.emplace(requests[i], page_t{requests[i], 0, i});
-            }
-            return true;
         }
+
+        void replace_latest_page(KeyT key, T content)
+        {
+            hash_.erase(hash_.find(key));
+
+            MapIt later_used = cache_.begin();
+            auto next_curr = hash_.find(key);
+
+            if (next_curr != hash_.end() && later_used->second.pos > next_curr->second.pos)
+            {
+                cache_.erase(later_used);
+                cache_.emplace(next_curr->second.pos, page_t{key, content, next_curr->second.pos});
+            }
+        }
+
+        void add_new_page(KeyT key, T content)
+        {
+            hash_.erase(hash_.find(key));
+            auto next_curr = hash_.find(key);
+
+            if (next_curr != hash_.end())
+                cache_.emplace(next_curr->second.pos, page_t{key, content, next_curr->second.pos});
+        }
+
+        void hit_update(KeyT key, T content)
+        {
+            hash_.erase(hash_.find(key));
+
+            auto next_curr = hash_.find(key);
+
+            if (next_curr == hash_.end())
+                cache_.emplace(req_num_, page_t{key, content, req_num_});
+            else
+                cache_.emplace(next_curr->second.pos, page_t{key, content, next_curr->second.pos});
+        }
+
+        public:
+
+        ideal_cache_t(size_t sz, size_t req_num, KeyT* reqs) :
+        sz_(sz), req_num_(req_num), requests(reqs)
+        { get_requests();};
 
         template <typename F>
         bool lookup_update(size_t pos, F slow_get_page)
@@ -68,65 +92,16 @@ namespace ideal_caches {
             {
                 if (full())
                 {
-                    hash_.erase(hash_.find(requests[pos]));
-
-                    MapIt later_used = cache_.begin();
-                    auto next_curr = hash_.find(requests[pos]);
-
-                    if (next_curr != hash_.end() && later_used->second.pos > next_curr->second.pos)
-                    {
-                        cache_.erase(later_used);
-                        cache_.emplace(next_curr->second.pos, page_t{requests[pos],
-                                       slow_get_page(requests[pos]), next_curr->second.pos});
-                    }
-
+                    replace_latest_page(requests[pos], slow_get_page(requests[pos]));
                     return false;
                 }
-
-                hash_.erase(hash_.find(requests[pos]));
-                auto next_curr = hash_.find(requests[pos]);
-
-                if (next_curr != hash_.end())
-                    cache_.emplace(next_curr->second.pos, page_t{requests[pos],
-                                   slow_get_page(requests[pos]), next_curr->second.pos});
-
+                add_new_page(requests[pos], slow_get_page(requests[pos]));
                 return false;
             }
-
             cache_.erase(hit);
-            hash_.erase(hash_.find(requests[pos]));
-
-            auto next_curr = hash_.find(requests[pos]);
-
-            if (next_curr == hash_.end())
-                cache_.emplace(req_num_, page_t{requests[pos], slow_get_page(requests[pos]), req_num_});
-            else
-                cache_.emplace(next_curr->second.pos, page_t{requests[pos],
-                               slow_get_page(requests[pos]), next_curr->second.pos});
+            hit_update(requests[pos], slow_get_page(requests[pos]));
 
             return true;
-        }
-
-        void print_cache()
-        {
-            std::cout << "cache, size = " << cache_.size() << std::endl;
-            for (auto it = cache_.begin(); it != cache_.end(); it++)
-                std::cout << it->second.key << "-" << it->second.pos << std::endl;
-
-            std::cout << "\n\n";
-        }
-
-        void print_hash()
-        {
-            std::cout << "hash" << std::endl;
-            for (unsigned i = 0; i < hash_.bucket_count(); ++i)
-            {
-                std::cout << i << " contains:";
-                for (auto local_it = hash_.begin(i); local_it != hash_.end(i); ++local_it)
-                    std::cout << " " << local_it->first << ":" << local_it->second.pos;
-                std::cout << std::endl;
-            }
-            std::cout << "\n\n";
         }
     };
 

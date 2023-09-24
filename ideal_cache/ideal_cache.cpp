@@ -9,8 +9,6 @@ int slow_get_page(int key)
 
 int main()
 {
-    //std::cout << "Enter cache size and number of requests:" << std::endl;
-
     size_t cache_size = 0,
            req_num = 0;
 
@@ -26,16 +24,28 @@ int main()
         return 1;
     }
 
-    //std::cout << "Enter " << req_num << " requests:" << std::endl;
+    int* requests = new int[req_num];
+    int curr_key = 0;
 
-    ideal_caches::ideal_cache_t<int> myIdealCache{cache_size, req_num};
+    for (size_t i = 0; i < req_num; i++)
+    {
+        if (!(std::cin >> curr_key))
+        {
+            std::cout << "Bad request on pos " << i << std::endl;
+            return 1;
+        }
+        requests[i] = curr_key;
+    }
+
+    ideal_caches::ideal_cache_t<int> myIdealCache{cache_size, req_num, requests};
     size_t hits = 0;
 
-    if (myIdealCache.get_requests())
-        for (size_t i = 0; i < req_num; i++)
-            hits += (size_t) myIdealCache.lookup_update(i, slow_get_page);
+    for (size_t i = 0; i < req_num; i++)
+        hits += (size_t) myIdealCache.lookup_update(i, slow_get_page);
 
     std::cout << "Ideal cache hits = " << hits << std::endl;
+
+    delete[] requests;
 
     return 0;
 }
