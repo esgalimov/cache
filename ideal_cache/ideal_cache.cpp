@@ -24,7 +24,9 @@ int main()
         return 1;
     }
 
-    int* requests = new int[req_num];
+    std::vector<int> requests;
+    requests.reserve(req_num);
+
     int curr_key = 0;
 
     for (size_t i = 0; i < req_num; i++)
@@ -44,8 +46,6 @@ int main()
         hits += (size_t) myIdealCache.lookup_update(i, slow_get_page);
 
     std::cout << "Ideal cache hits = " << hits << std::endl;
-
-    delete[] requests;
 
     return 0;
 }

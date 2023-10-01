@@ -37,12 +37,12 @@ namespace caches {
 
         void delete_less_used_page()
         {
-            ListIt less_used_iter = (cnt_.begin()->second).begin();
+            ListIt less_used_iter = cnt_.begin()->second.begin();
 
             CntT less_used_cnt = less_used_iter->cnt;
 
             hash_.erase(less_used_iter->key);
-            (cnt_.begin()->second).erase(less_used_iter);
+            cnt_.begin()->second.erase(less_used_iter);
 
             if (cnt_.begin()->second.size() == 0)
                 cnt_.erase(less_used_cnt);
@@ -57,7 +57,7 @@ namespace caches {
             if (cnt_one_find == cnt_.end())
                 cnt_.emplace(1, std::list<page_t>{emplace_struct});
             else
-                (cnt_.begin()->second).emplace_back(emplace_struct);
+                cnt_.begin()->second.emplace_back(emplace_struct);
 
             hash_.emplace(key, --(cnt_.begin()->second.end()));
         }
@@ -78,7 +78,7 @@ namespace caches {
 
             CntT cnt_before = cur_iter->cnt - 1;
             auto cnt_before_find = cnt_.find(cnt_before);
-            (*cnt_before_find).second.erase(cur_iter);
+            cnt_before_find->second.erase(cur_iter);
 
             if (cnt_before_find->second.size() == 0)
                 cnt_.erase(cnt_before);
