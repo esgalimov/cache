@@ -1,5 +1,5 @@
-lfu_cache_obj="./build/lfu_cache/lfu_cache.o"
-ideal_cache_odj="./build/ideal_cache/ideal_cache.o"
+lfu_cache_obj="./build/lfu_cache.o"
+ideal_cache_odj="./build/ideal_cache.o"
 
 little_test_folder="./tests/little_tests/"
 little_test_files_names=("t1.dat" "t2.dat" "t3.dat" "t4.dat" "t5.dat" "t6.dat" "t7.dat" "t8.dat" "t9.dat" "t10.dat")

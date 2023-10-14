@@ -2,13 +2,13 @@ CXX ?= g++
 
 CXXFLAGS ?= -std=c++17 -O2 -g
 BUILDDIR ?= ./build/
-SRCDIR ?= ./
+SRCDIR ?= ./source/
 
-COMMONINC = -I./lfu_cache -I./ideal_cache
+COMMONINC = -I./include
 
 CXXFLAGS += $(COMMONINC)
 
-CCSRCS = $(SRCDIR)lfu_cache/lfu_cache.cpp $(SRCDIR)ideal_cache/ideal_cache.cpp
+CCSRCS = $(SRCDIR)lfu_cache.cpp $(SRCDIR)ideal_cache.cpp
 
 SUBS := $(CCSRCS)
 SUBS := $(subst $(SRCDIR), $(BUILDDIR), $(SUBS))
@@ -22,7 +22,7 @@ all: $(OBJS)
 
 $(BUILDDIR)%.o: $(SRCDIR)%.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) $< $(SRCDIR)get.cpp -o $@
 
 include $(DEPS)
 
