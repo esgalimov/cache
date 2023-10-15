@@ -1,5 +1,5 @@
 #pragma once
-#include <iostream>
+#include <vector>
 
 struct cache_props_t {
     size_t cache_size = 0;
